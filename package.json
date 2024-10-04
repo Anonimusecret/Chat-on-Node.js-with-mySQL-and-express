@@ -1,0 +1,21 @@
+{
+  "name": "testchat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "chat",
+    "web",
+    "online"
+  ],
+  "author": "Anonimusecret",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "express": "^4.21.0",
+    "sequelize": "^6.37.3"
+  }
+}

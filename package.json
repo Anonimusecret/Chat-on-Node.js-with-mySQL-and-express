@@ -17,6 +17,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "express": "^4.21.0",
+    "mysql2": "^3.11.3",
     "sequelize": "^6.37.3"
   }
 }

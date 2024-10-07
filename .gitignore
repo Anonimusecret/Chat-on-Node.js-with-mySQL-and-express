@@ -1,4 +1,4 @@
 node_modules
 bootstrap-5.3.0-dist
-assets/brand
-assets/dist
+frontend/assets/brand
+frontend/assets/dist

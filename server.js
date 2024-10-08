@@ -3,9 +3,12 @@ const express = require('express');
 const bodyParser = require('body-parser')
 //const pool = require('../backend/pool.js')
 const session = require('express-session')
+const path = require('path');
+const { console } = require("inspector/promises");
 
 const app = express()
 const port = 3000
+
 
 app.use(express.static('frontend'))
 app.use(bodyParser.json())
@@ -14,7 +17,8 @@ app.use(session({
     secret: 'qwerty',
     resave: false,
     saveUninitialized: true
-  }))
+}))
+app.use(express.static('/frontend/assets/dist/css'))
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
@@ -27,18 +31,45 @@ const requestTime = function (req, res, next) {
 
 app.use(requestTime)
 
-app.post('/users', (req, res) => {
+app.post('/reg', (req, res) => {
 
     pool.query(
-        `INSERT INTO users SET ?`,
-        req.body,
+        'SELECT * FROM users WHERE login = ?',
+        req.body.login,
         (error, result) => {
-            if (error) throw error;
-            res.send(`User added with ID: ${result.insertId}`);
+            if(error) throw error;
+            if(result.length != 0){
+                res.send('{"status": "deny"}')
+                console.log('Регистрация отклонена')
+            }else{
+                console.log('можно вносить')
+                let user = {
+                    login: req.body.login,
+                    password: req.body.password
+                }
+                pool.query(
+                    `INSERT INTO users SET ?`,
+                    user,
+                    (error, result) => {
+                        if (error) throw error;
+                        res.send('{"status": "reg"}')
+                        console.log(result)
+                    }
+                )
+            }
         }
     )
-    //res.send('smthng')
+})
 
+app.post("/", function(req, res) {
+    console.log('запрос от /')
+    req.session.autorized = true
+    res.send(req.session)
+})
+
+app.post('/main', (req, res) => {
+    let answer = {autorized: true}
+    res.send(answer)
 })
 
 app.post('/login', (req, res) => {
@@ -57,21 +88,31 @@ app.post('/login', (req, res) => {
                     console.log('авторизовано');
                     req.session.autorized = true;
                     req.session.uid = result[0].uid
-                    req.session.acces = result[0].acces
+                    req.session.login = result[0].login
+                    req.session.acces = result[0].acces 
+                    
                     //res.redirect("https://metanit.com")
-                    //res.redirect('main.html');
+                    res.send(req.session);
                 }else{
                     console.log('пароль неверный');
+                    req.session.autorized = false;
+                    res.send(req.session);
                 }
             }else{
                 console.log('пользователь не найден');
-                //res.send(result);
+                req.session.autorized = false;
+                res.send(req.session);
             }
             
         }
     )
     //res.send('smthng')
-    res.redirect("main")
+})
+
+app.post('/logout', (req,res) => {
+    req.session.destroy(function(){
+        res.redirect('/');
+    });
 })
 
 

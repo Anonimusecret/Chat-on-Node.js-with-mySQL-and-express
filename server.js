@@ -3,8 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser')
 //const pool = require('../backend/pool.js')
 const session = require('express-session')
-const path = require('path');
-const { console } = require("inspector/promises");
+
 
 const app = express()
 const port = 3000
@@ -115,6 +114,16 @@ app.post('/logout', (req,res) => {
     });
 })
 
+app.get('/chatsMain', (req, res) => {
+    console.log(req.session.uid)
+    pool.query(
+        'SELECT * FROM chat_members WHERE uid = ?',
+        req.session.uid,
+        (error, result) =>  {
+            if(error) throw error;
+            res.send(result)
+    })
+})
 
 const pool = mysql.createPool({
     host: "localhost",

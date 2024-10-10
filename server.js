@@ -125,6 +125,37 @@ app.get('/chatsMain', (req, res) => {
     })
 })
 
+app.post('/createChat', (req, res) => {
+    let chatid;
+    pool.query(
+        'INSERT INTO chats(name) VALUES (?)',
+        req.body.name,
+        (error, result) =>  {
+            if(error) throw error;
+            chatid = result.insertId;
+            pool.query(
+                `INSERT INTO chat_members(chatid, uid) VALUES (${chatid},?)`,
+                req.session.uid,
+                (error, result) =>  {
+                    if(error) throw error;
+                    res.send({chatid: chatid})
+            })
+    })
+
+    
+})
+
+app.post('/chat/:chatroomid', (req, res) => {
+    let chatroomid = req.body.chatid
+    pool.query(
+        'SELECT * FROM messages where chatid = ? ORDER BY msgid',
+        chatroomid,
+        (error, result) =>  {
+            if(error) throw error;
+            res.send({chatid: chatid})
+    })
+})
+
 const pool = mysql.createPool({
     host: "localhost",
     user: "root",

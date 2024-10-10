@@ -2,46 +2,87 @@
 //  testButton.addEventListener('click', () => startMain(document.getElementById(user.session)), false);
 
 let chatList = document.getElementById("firsList1");
-
-let chatInfo = getChats();
-console.log('Ответ от сервера' + chatInfo)
-
-
-
 let id = 0;
 let chat;
-let chatname = 'example ' + id
+let chatname;
+let message;
 
-for(info of chatinfo){
-    id = info.chatid;
-    //chatname = info.name
-    chat = createChatTemplate(id)
+printChats()
 
-    chatList.appendChild(chat)
-}
 
-chat.className = 'list-group-item list-group-item-action d-flex gap-3 py-3'
-chat.ariaCurrent = 'true'
-chatButton.id = `chatButton${id}`
 
-chatList.appendChild(chat)
-
-chat.addEventListener('click', () => chatRedirect(), false);
-
-async function getChats() { //чет тут не так, оно возвращает промис
+async function getChats() {
     let result;
 
     let response = await fetch('/chatsMain', {
         method: 'GET'
     })
-    result = response.json();
+    result = await response.json();
     console.log(result)
-    
-    return result;
+    console.log('xx2 = ' + result.length)
+    return await result;
     
 }
 
-function createChatTemplate(id){
+async function createNewChat(chatname) {
+    
+    let data = {name: chatname};
+    let result;
+
+
+    let response = await fetch('/createChat', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    })
+    result = await response.json();
+
+    chatRedirect(result.chatid)
+
+
+
+}
+
+
+async function printChats() {
+
+    let chatInfo = await getChats();
+    if(chatInfo.length == 0){
+        message = 'Вы не состоите не в одном чате. Нажмите, чтобы создать чат'
+        chat = createChatTemplate(0, message)
+
+        chat.addEventListener('click', () => createNewChat('testchat2'), false);
+
+        chatList.appendChild(chat)
+
+    }else{
+
+        for(info of chatInfo){
+            id = info.chatid;
+            chatname = 'example ' + id;
+            //chatname = info.name
+            chat = createChatTemplate(id, chatname)
+
+            chat.addEventListener('click', () => chatRedirect(), false);
+
+            chatList.appendChild(chat)
+        }
+        message = 'Нажмите, чтобы создать чат'
+        chat = createChatTemplate(0, message)
+
+        chat.addEventListener('click', () => createNewChat('testchat2'), false);
+
+        chatList.appendChild(chat)
+    }
+    
+
+    
+
+}
+
+function createChatTemplate(id, chatName){
     let chatTemplate = document.createElement('a')
     chatTemplate.className = "list-group-item list-group-item-action d-flex gap-3 py-3"
     chatTemplate.ariaCurrent = 'true'
@@ -63,7 +104,7 @@ function createChatTemplate(id){
 
     let h = document.createElement('h6')
     h.className = "mb-0"
-    h.textContent = 'Chat name'
+    h.textContent = `${chatName}`
 
 
     let p = document.createElement('p')
@@ -98,5 +139,5 @@ function createChatTemplate(id){
 
 function chatRedirect(){
     location.href="./chat.html"
-    alert(`Кнопка ${id} работает`)
+    //alert(`Кнопка ${id} работает`)
 }

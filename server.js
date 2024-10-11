@@ -152,7 +152,7 @@ app.post('/chat/:chatroomid', (req, res) => {
         chatroomid,
         (error, result) =>  {
             if(error) throw error;
-            res.send({chatid: chatid})
+            res.send({result})
     })
 })
 

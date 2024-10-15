@@ -1,0 +1,152 @@
+const sendMessageButton = document.getElementById('sendMessageButton')
+sendMessageButton.addEventListener('click', () => sendMessage(document.getElementById('messageText').value), false);
+
+let chatid //= document.getElementById('sendMessageButton');
+let currentLocation = window.location;
+console.log(currentLocation.pathname)
+
+const chatContainer = document.getElementById('chatContainer');
+
+let msgdiv;
+let p;
+let userMessages;
+let lastuid = -1;
+
+let position;
+let user;
+
+getUser();
+async function getUser() {
+    response = await fetch(currentLocation.pathname, {
+        method: "GET",
+    });
+
+    user = await response.json();
+    console.log(user)
+}
+
+
+
+async function getMessages() {
+    data = {chatid: chatid}
+
+    response = await fetch(currentLocation.pathname, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    let result = await response.json();
+    console.log(result)
+    
+}
+
+function printMessages(messages){
+
+    if(messages.length == 0){
+        let divider = document.createElement('div') 
+        divider.className = 'divider d-flex align-items-center mb-4'
+
+        p = document.createElement('p')  
+        p.textContent = 'В чате пока нет сообщений'
+        p.className = 'text-center mx-3 mb-0'
+        p.style = 'color: #a2aab7;'
+        divider.appendChild(p)
+        chatContainer.appendChild(divider)
+
+    }else{
+
+        let divider = document.createElement('div') 
+        divider.className = 'divider d-flex align-items-center mb-4'
+
+        p = document.createElement('p')  
+        p.textContent = 'Начало чата'
+        p.className = 'text-center mx-3 mb-0'
+        p.style = 'color: #a2aab7;'
+        divider.appendChild(p)
+        chatContainer.appendChild(divider)
+
+        for(mess of messages){
+    
+            if(mess.uid != lastuid){
+                messageTemplate()
+            }
+            addMessage(mess.message)
+            lastuid = mess.uid;
+        }
+
+    }
+
+}
+
+//              <div class="d-flex flex-row justify-content-start mb-4">
+//                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp"
+//                  alt="avatar 1" style="width: 45px; height: 100%;">
+//                <div>
+//                  <p class="small p-2 ms-3 mb-1 rounded-3 bg-body-tertiary">Sorry I don't
+//                    have. i
+//                    changed my phone.</p>
+//                  <p class="small ms-3 mb-3 rounded-3 text-muted">00:13</p>
+//                </div>
+//              </div>
+
+function messageTemplate(author){
+
+    if(author == user.uid){
+        position = 'start'
+    }else{
+        position = 'end'
+    }
+    
+    let avatar = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp'
+
+    userMessages = document.createElement('div') 
+    userMessages.className = `d-flex flex-row justify-content-${position} mb-4`
+
+    let img = document.createElement('img')
+    img.src = avatar
+    img.style = "width: 45px; height: 100%;"
+    img.alt = 'avatar'
+    userMessages.appendChild(img)
+
+    msgdiv = document.createElement('div')
+
+    //addMessage here
+
+    let time = document.createElement('p')
+    p.className = 'small ms-3 mb-3 rounded-3 text-muted'
+    p.textContent = messages.time
+    msgdiv.appendChild(time)
+
+    userMessages.appendChild(msgdiv)
+    chatContainer.appendChild(userMessages)
+
+}
+
+function addMessage(message){
+
+    p = document.createElement('p')
+    p.textContent = message;
+    p.className = "small p-2 ms-3 mb-1 rounded-3 bg-body-tertiary"
+    msgdiv.appendChild(p)
+
+}
+
+
+async function sendMessage(input){
+    
+    data = {message: input}
+
+    response = await fetch("/chat/:chatroomid", {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    let result = await response.json();
+    console.log(result)
+
+    input = '';
+}

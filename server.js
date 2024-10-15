@@ -8,7 +8,8 @@ const session = require('express-session')
 const app = express()
 const port = 3000
 
-
+app.set('view engine', 'pug')
+app.set('views', './frontend');
 app.use(express.static('frontend'))
 app.use(bodyParser.json())
 app.use(express.static('backend'))
@@ -18,6 +19,7 @@ app.use(session({
     saveUninitialized: true
 }))
 app.use(express.static('/frontend/assets/dist/css'))
+app.use(express.static('./frontend/chat.css'))
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
@@ -146,13 +148,63 @@ app.post('/createChat', (req, res) => {
 })
 
 app.post('/chat/:chatroomid', (req, res) => {
-    let chatroomid = req.body.chatid
+    let chatroomid = req.params.chatroomid
+    //console.log(chatroomid)
     pool.query(
         'SELECT * FROM messages where chatid = ? ORDER BY msgid',
         chatroomid,
         (error, result) =>  {
             if(error) throw error;
+            res.send(result)
+    })
+})
+
+app.put('/chat/:chatroomid', (req, res) => {
+    let chatroomid = req.params.chatroomid
+    let input = {uid: req.session.uid || 1, chatid: chatroomid, message: req.body.message}
+    req.body.uid = req.session.uid
+    pool.query(
+        'INSERT INTO messages SET ?',
+        input,
+        (error, result) =>  {
+            if(error) throw error;
             res.send({result})
+    })
+})
+
+app.get('/chat/:chatroomid', (req, res) => {
+
+    let chatroomid = req.params.chatroomid
+    console.log(chatroomid)
+    req.body.uid = req.session.uid
+    pool.query(
+        'SELECT * FROM messages where chatid = ? ORDER BY msgid',
+        chatroomid,
+        (error, result) =>  {
+            if(error) throw error;
+            
+            //res.send(result)
+            res.render('chat.pug', { title: chatroomid, user: req.session.uid })
+
+    })
+    //res.redirect('/chat.html')
+})
+
+app.get('/users/this', (req, res) => {
+
+    res.send(req.session);
+
+})
+
+app.get('/users/all', (req, res) => {
+
+    pool.query(
+        'SELECT uid, login FROM users',
+        chatroomid,
+        (error, result) =>  {
+            if(error) throw error;
+            
+            res.send(result);
     })
 })
 

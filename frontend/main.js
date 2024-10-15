@@ -58,6 +58,8 @@ async function printChats() {
         chatList.appendChild(chat)
 
     }else{
+        let chatIDs = [];
+        let i = 0;
 
         for(info of chatInfo){
             id = info.chatid;
@@ -65,19 +67,31 @@ async function printChats() {
             //chatname = info.name
             chat = createChatTemplate(id, chatname)
 
-            chat.addEventListener('click', () => chatRedirect(), false);
+            
+
+            chatIDs[i] = id
+            i++;
 
             chatList.appendChild(chat)
+
         }
+
+        for(let i=0 ; i < chatIDs.length; i++){
+
+            chat = document.getElementById(`chatButton${chatIDs[i]}`)
+
+            chat.addEventListener('click', () => chatRedirect(chatIDs[i]), false);
+
+        }
+
         message = 'Нажмите, чтобы создать чат'
         chat = createChatTemplate(0, message)
 
         chat.addEventListener('click', () => createNewChat('testchat2'), false);
 
         chatList.appendChild(chat)
-    }
-    
 
+    }
     
 
 }
@@ -137,7 +151,21 @@ function createChatTemplate(id, chatName){
 //<small class="opacity-50 text-nowrap">now</small>
 //</div>
 
-function chatRedirect(){
-    location.href="./chat.html"
+async function chatRedirect(chatroomid){
+    data = {chatid: chatroomid}
+
+    alert(chatroomid);
+    
+    response = await fetch(`/chat/${chatroomid}`, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    let result = await response.json();
+    console.log(result)
+
+    location.href=`./chat/${chatroomid}`
     //alert(`Кнопка ${id} работает`)
 }

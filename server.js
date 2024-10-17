@@ -190,6 +190,64 @@ app.get('/chat/:chatroomid', (req, res) => {
     //res.redirect('/chat.html')
 })
 
+app.put('/invite/:chatroomid', (req, res) =>{
+    let newMember = {chatid: req.params.chatroomid}
+
+    pool.query(
+        'SELECT * FROM users where login = ?',
+        req.body.user,
+        (error, result) => {
+            if(error) throw error;
+            console.log('inviting user ' + result[0].login)
+            newMember.uid = result[0].uid
+
+            pool.query(
+                'INSERT INTO chat_members SET ?',
+                newMember,
+                (error, result) => {
+                    if(error) throw error;
+        
+                    res.send(result)
+                }
+            )
+        }
+    )
+
+    
+})
+
+app.get('/chat_members/:chatroomid', (req, res) =>{
+    let chatroomid = req.params.chatroomid;
+    let chat_members = '';
+
+    pool.query(
+        'SELECT uid FROM chat_members WHERE chatid = ?',
+        chatroomid,
+        (error, result) => {
+            if(error) throw error;
+
+            for(let i = 0 ; i < result.length ; i++){
+                chat_members += result[i].uid
+                if(i < result.length-1){
+                    chat_members += ', '
+                }
+            }
+
+            pool.query(
+                'SELECT uid, login FROM users WHERE uid IN (?)',
+                chat_members,
+                (error, result) => {
+                    if(error) throw error;
+                    res.send(result)
+                }
+            )
+        }
+    )
+
+    
+})
+
+
 app.get('/users/this', (req, res) => {
 
     res.send(req.session);
@@ -206,6 +264,10 @@ app.get('/users/all', (req, res) => {
             
             res.send(result);
     })
+})
+
+app.get('/profile', (req, res) => {
+    res.render('profile.pug', {username: req.session.login})
 })
 
 const pool = mysql.createPool({

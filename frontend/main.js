@@ -153,8 +153,6 @@ function createChatTemplate(id, chatName){
 
 async function chatRedirect(chatroomid){
     data = {chatid: chatroomid}
-
-    alert(chatroomid);
     
     response = await fetch(`/chat/${chatroomid}`, {
         method: "POST",

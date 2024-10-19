@@ -25,15 +25,13 @@ app.use(express.static('/frontend/assets/dist/css'))
 app.use(express.static('./frontend/chat.css'))
 
 io.on('connection', (socket) => {
-    console.log(`User connected on ` + socket);
+    console.log(`User connected on ` + socket.id);
     let room;
 
     socket.on('join chat',  body  => {
         room = body.room
 
         socket.join(room)
-        //socket.in(room).emit('notification', { title: 'Someone\'s here', description: `${user.name} just entered the room` })
-        //io.in(room).emit('users', getUsers(room))
 
     })
     
@@ -43,12 +41,10 @@ io.on('connection', (socket) => {
         io.in(room).emit('message', input); 
     })
 
-
-
 });
 
 server.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Server listening on port ${port}`)
 })
 
 const requestTime = function (req, res, next) {
@@ -220,11 +216,11 @@ app.get('/chat/:chatroomid', (req, res) => {
         (error, result) =>  {
             if(error) throw error;
             
-            //res.send(result)
+            
             res.render('chat.pug', { title: chatroomid, user: req.session.uid })
 
     })
-    //res.redirect('/chat.html')
+
 })
 
 app.put('/invite/:chatroomid', (req, res) =>{
@@ -255,7 +251,6 @@ app.put('/invite/:chatroomid', (req, res) =>{
 
 app.get('/chat_members/:chatroomid', (req, res) =>{
     let chatroomid = req.params.chatroomid;
-    //let chat_members = '';
 
     pool.query(
         'SELECT uid FROM chat_members WHERE chatid = ?',
@@ -275,7 +270,6 @@ app.get('/chat_members/:chatroomid', (req, res) =>{
         }
     )
 
-    
 })
 
 
@@ -326,13 +320,4 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0,
 });
 
-
-
-pool.query(
-    'SELECT * FROM `acces`',
-    function (err, results, fields) {
-        console.log(results);
-        console.log(fields); 
-    }
-);
 

@@ -13,13 +13,13 @@ loginForm.onsubmit = async (form) => {
         }
     });
     let result = await response.json();
-    console.log(result)
+
     if (result.autorized){
         location.href="./main.html"
     } else {
         alert('неверный логин или пароль')
     }
-    //console.log(result);
+
 };
 
 async function start(){
@@ -28,7 +28,7 @@ async function start(){
 })
 
 let result = await response.json();
-console.log(result)
+
 if(result){
     location.href="./main.html"
 } else {

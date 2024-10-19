@@ -1,7 +1,6 @@
 const mysql = require("mysql2");
 const express = require('express');
 const bodyParser = require('body-parser')
-//const pool = require('../backend/pool.js')
 const session = require('express-session')
 
 
@@ -30,6 +29,16 @@ const requestTime = function (req, res, next) {
     next()
 }
 
+const authCheck = function(req, res, next){
+    if(!req.session.autorized){
+        res.redirect('/login.html')
+        return
+    }
+    next()
+
+}
+
+
 app.use(requestTime)
 
 app.post('/reg', (req, res) => {
@@ -54,23 +63,11 @@ app.post('/reg', (req, res) => {
                     (error, result) => {
                         if (error) throw error;
                         res.send('{"status": "reg"}')
-                        console.log(result)
                     }
                 )
             }
         }
     )
-})
-
-app.post("/", function(req, res) {
-    console.log('запрос от /')
-    req.session.autorized = true
-    res.send(req.session)
-})
-
-app.post('/main', (req, res) => {
-    let answer = {autorized: true}
-    res.send(answer)
 })
 
 app.post('/login', (req, res) => {
@@ -83,64 +80,77 @@ app.post('/login', (req, res) => {
         userLogin,
         (error, result) => {
             if (error) throw error;
-            if(result.length != 0){
+            
+            if(result.length == 0){
+                console.log('пользователь не найден');
+                req.session.autorized = false;
+
+            }else{
+                let user = result[0]
                 console.log(result);
-                if(result[0].password == userPassword){
+                if(user.password == userPassword){
                     console.log('авторизовано');
                     req.session.autorized = true;
-                    req.session.uid = result[0].uid
-                    req.session.login = result[0].login
-                    req.session.acces = result[0].acces 
+                    req.session.uid = user.uid
+                    req.session.login = user.login
+                    req.session.acces = user.acces 
                     
-                    //res.redirect("https://metanit.com")
-                    res.send(req.session);
                 }else{
                     console.log('пароль неверный');
                     req.session.autorized = false;
-                    res.send(req.session);
+                    
                 }
-            }else{
-                console.log('пользователь не найден');
-                req.session.autorized = false;
-                res.send(req.session);
             }
-            
+            res.send(req.session);
         }
     )
-    //res.send('smthng')
 })
 
-app.post('/logout', (req,res) => {
+app.get("/", function(req, res) {
+    console.log('запрос от /')
+    res.redirect('/login.html')
+})
+
+app.use(authCheck)
+
+app.get('/logout', (req,res) => {
     req.session.destroy(function(){
-        res.redirect('/');
+        res.redirect('/login.html');
     });
+})
+
+app.post('/main', (req, res) => {
+    let answer = {autorized: true}
+    res.send(answer)
 })
 
 app.get('/chatsMain', (req, res) => {
     console.log(req.session.uid)
     pool.query(
-        'SELECT * FROM chat_members WHERE uid = ?',
-        req.session.uid,
+        `SELECT * FROM chats WHERE chatid IN (SELECT chatid FROM chat_members WHERE uid = ${req.session.uid})`,
         (error, result) =>  {
             if(error) throw error;
+
             res.send(result)
     })
 })
 
 app.post('/createChat', (req, res) => {
     let chatid;
+    let chatname = req.body.name;
     pool.query(
         'INSERT INTO chats(name) VALUES (?)',
         req.body.name,
         (error, result) =>  {
             if(error) throw error;
             chatid = result.insertId;
+            
             pool.query(
                 `INSERT INTO chat_members(chatid, uid) VALUES (${chatid},?)`,
                 req.session.uid,
                 (error, result) =>  {
                     if(error) throw error;
-                    res.send({chatid: chatid})
+                    res.send({chatid: chatid, chatname: chatname})
             })
     })
 
@@ -149,7 +159,6 @@ app.post('/createChat', (req, res) => {
 
 app.post('/chat/:chatroomid', (req, res) => {
     let chatroomid = req.params.chatroomid
-    //console.log(chatroomid)
     pool.query(
         'SELECT * FROM messages where chatid = ? ORDER BY msgid',
         chatroomid,
@@ -175,7 +184,6 @@ app.put('/chat/:chatroomid', (req, res) => {
 app.get('/chat/:chatroomid', (req, res) => {
 
     let chatroomid = req.params.chatroomid
-    console.log(chatroomid)
     req.body.uid = req.session.uid
     pool.query(
         'SELECT * FROM messages where chatid = ? ORDER BY msgid',
@@ -218,7 +226,7 @@ app.put('/invite/:chatroomid', (req, res) =>{
 
 app.get('/chat_members/:chatroomid', (req, res) =>{
     let chatroomid = req.params.chatroomid;
-    let chat_members = '';
+    //let chat_members = '';
 
     pool.query(
         'SELECT uid FROM chat_members WHERE chatid = ?',
@@ -226,16 +234,10 @@ app.get('/chat_members/:chatroomid', (req, res) =>{
         (error, result) => {
             if(error) throw error;
 
-            for(let i = 0 ; i < result.length ; i++){
-                chat_members += result[i].uid
-                if(i < result.length-1){
-                    chat_members += ', '
-                }
-            }
+            let userIds = result.map((x) => x.uid)
 
             pool.query(
-                'SELECT uid, login FROM users WHERE uid IN (?)',
-                chat_members,
+                `SELECT uid, login FROM users WHERE uid IN (${userIds})`,
                 (error, result) => {
                     if(error) throw error;
                     res.send(result)
@@ -256,18 +258,29 @@ app.get('/users/this', (req, res) => {
 
 app.get('/users/all', (req, res) => {
 
-    pool.query(
-        'SELECT uid, login FROM users',
-        chatroomid,
-        (error, result) =>  {
-            if(error) throw error;
-            
-            res.send(result);
-    })
+    if(req.session.acces == 2){
+
+        pool.query(
+            'SELECT uid, login FROM users',
+            (error, result) =>  {
+                if(error) throw error;
+                
+                res.send(result);
+        })
+        
+    }
+
+    
 })
 
 app.get('/profile', (req, res) => {
-    res.render('profile.pug', {username: req.session.login})
+    let acces;
+    if(req.session.acces == 1){
+        acces = 'Пользователь'
+    }else{
+        acces = 'Администратор'
+    }
+    res.render('profile.pug', {username: req.session.login, acces: acces})
 })
 
 const pool = mysql.createPool({
@@ -277,8 +290,8 @@ const pool = mysql.createPool({
     password: "Darkness",
     waitForConnections: true,
     connectionLimit: 10,
-    maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`
-    idleTimeout: 60000, // idle connections timeout, in milliseconds, the default value 60000
+    maxIdle: 10, 
+    idleTimeout: 60000, 
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
@@ -286,28 +299,11 @@ const pool = mysql.createPool({
 
 
 
-// тестирование подключения
-//pool.connect(function(err){
-//   if (err) {
-//      return console.error("Ошибка: " + err.message);
-//    }
-//    else{
-//        console.log("Подключение к серверу MySQL успешно установлено");
-//    }
-//});
-
 pool.query(
     'SELECT * FROM `acces`',
     function (err, results, fields) {
-      console.log(results); // results contains rows returned by server
-      console.log(fields); // fields contains extra meta data about results, if available
+        console.log(results);
+        console.log(fields); 
     }
 );
 
-// закрытие подключения
-//connection.end(function(err) {
-//if (err) {
-//    return console.log("Ошибка: " + err.message);
-//}
-//console.log("Подключение закрыто");
-//});

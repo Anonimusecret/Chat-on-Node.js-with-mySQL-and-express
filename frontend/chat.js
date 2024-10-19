@@ -8,8 +8,6 @@ inviteButton.addEventListener('click', () => invite(), false);
 let currentLocation = window.location;
 let chatid = currentLocation.pathname.slice(6);
 
-console.log(currentLocation.pathname)
-console.log(chatid)
 
 const chatContainer = document.getElementById('chatContainer');
 
@@ -20,6 +18,8 @@ let lastuid = -1;
 
 let position;
 let user;
+
+let messages = '';
 
 //getUser();
 
@@ -64,17 +64,18 @@ async function printMessages(){
     let chatMembersResuslt = await response.json();
     let chatMembers = {};
 
+
     for(obj of chatMembersResuslt){
         chatMembers[obj.uid] = obj.login
     }
-    console.log('chatMembers = ' + chatMembers[7])
+
 
     response = await fetch('/users/this', {
         method: "GET",
     });
 
     user = await response.json();
-    console.log(user)
+
 
     let data = {chatid: chatid}
 
@@ -85,8 +86,7 @@ async function printMessages(){
             "Content-type": "application/json; charset=UTF-8"
         }
     });
-    let messages = await response.json();
-    console.log(messages)
+    messages = await response.json();
 
     if(messages.length == 0){
         let divider = document.createElement('div') 
@@ -98,6 +98,7 @@ async function printMessages(){
         p.style = 'color: #a2aab7;'
         divider.appendChild(p)
         chatContainer.appendChild(divider)
+        
 
     }else{
 
@@ -115,10 +116,9 @@ async function printMessages(){
         //for(mess of messages){
             
             if(messages[i].uid != lastuid){
-                messageTemplate(chatMembers[messages[i].uid])
+                messageTemplate(chatMembers[user.uid])
             }
             addMessage(messages[i].message)
-            console.log(messages[i].message)
             lastuid = messages[i].uid;
         }
 
@@ -130,11 +130,6 @@ async function printMessages(){
 
 function messageTemplate(username){
 
-    //if(author == user.uid){
-    //    position = 'start'
-    //}else{
-    //    position = 'end'
-    //}
     
     let avatar = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3-bg.webp'
 
@@ -153,7 +148,6 @@ function messageTemplate(username){
     nickname.className = 'h5'
     nickname.textContent = username //messages.time
     msgdiv.appendChild(nickname)
-    console.log(username)
 
     //addMessage here
 
@@ -161,8 +155,6 @@ function messageTemplate(username){
     //time.className = 'small ms-3 mb-3 rounded-3 text-muted'
     //time.textContent = '00:00' //messages.time
     //msgdiv.appendChild(time)
-
-    
 
     userMessages.appendChild(msgdiv)
     chatContainer.appendChild(userMessages)
@@ -191,9 +183,14 @@ async function sendMessage(input){
         }
     });
     let result = await response.json();
-    console.log(result)
 
-    input = '';
+    if(messages.length == 0){
+        messageTemplate(chatMembers[messages[i].uid])
+    }
+    
+    addMessage(input)
+
+    document.getElementById('messageText').value = '';
 }
 
 async function invite(){
@@ -210,6 +207,6 @@ async function invite(){
         }
     });
     let result = await response.json();
-    console.log(result)
+
 
 }

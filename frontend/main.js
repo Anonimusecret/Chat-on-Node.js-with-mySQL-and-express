@@ -18,8 +18,6 @@ async function getChats() {
         method: 'GET'
     })
     result = await response.json();
-    console.log(result)
-    console.log('xx2 = ' + result.length)
     return await result;
     
 }
@@ -49,11 +47,12 @@ async function createNewChat(chatname) {
 async function printChats() {
 
     let chatInfo = await getChats();
+
     if(chatInfo.length == 0){
-        message = 'Вы не состоите не в одном чате. Нажмите, чтобы создать чат'
+        message = 'Вы не состоите ни в одном чате. Нажмите, чтобы создать чат'
         chat = createChatTemplate(0, message)
 
-        chat.addEventListener('click', () => createNewChat('testchat2'), false);
+        chat.addEventListener('click', () => createNewChat(prompt('Введите название чата')), false);
 
         chatList.appendChild(chat)
 
@@ -62,9 +61,9 @@ async function printChats() {
         let i = 0;
 
         for(info of chatInfo){
+
             id = info.chatid;
-            chatname = 'example ' + id;
-            //chatname = info.name
+            chatname = info.name
             chat = createChatTemplate(id, chatname)
 
             
@@ -87,7 +86,7 @@ async function printChats() {
         message = 'Нажмите, чтобы создать чат'
         chat = createChatTemplate(0, message)
 
-        chat.addEventListener('click', () => createNewChat('testchat2'), false);
+        chat.addEventListener('click', () => createNewChat(prompt('Введите название чата')), false);
 
         chatList.appendChild(chat)
 
@@ -103,7 +102,7 @@ function createChatTemplate(id, chatName){
     chatTemplate.id = `chatButton${id}`
     
     let img = document.createElement('img')
-    img.src = 'https://github.com/twbs.png'
+    img.src = 'https://community.adobe.com/legacyfs/online/1591122_thin-0306_chat_message_discussion_bubble_conversation-512.png'
     img.alt = 'twbs'
     img.width = '32'
     img.height = "32"
@@ -121,20 +120,20 @@ function createChatTemplate(id, chatName){
     h.textContent = `${chatName}`
 
 
-    let p = document.createElement('p')
-    p.className="mb-0 opacity-75"
-    p.textContent = 'Chat description'
+    //let p = document.createElement('p')
+    //p.className="mb-0 opacity-75"
+    //p.textContent = 'Chat description'
 
     
     div2.appendChild(h)
-    div2.appendChild(p)
+    //div2.appendChild(p)
     div.appendChild(div2)
 
-    let small = document.createElement('small')
-    small.className="opacity-50 text-nowrap"
-    small.textContent = 'time'
+    //let small = document.createElement('small')
+    //small.className="opacity-50 text-nowrap"
+    //small.textContent = 'time'
 
-    div.appendChild(small)
+    //div.appendChild(small)
 
     chatTemplate.appendChild(div)
 
@@ -142,14 +141,6 @@ function createChatTemplate(id, chatName){
 }
 
 
-//<img src="https://github.com/twbs.png" alt="twbs" width="32" height="32" class="rounded-circle flex-shrink-0">
-//<div class="d-flex gap-2 w-100 justify-content-between">
-//<div>
-//  <h6 class="mb-0">Test Chat 1</h6>
-//  <p class="mb-0 opacity-75">Описпние чата</p>
-//</div>
-//<small class="opacity-50 text-nowrap">now</small>
-//</div>
 
 async function chatRedirect(chatroomid){
     data = {chatid: chatroomid}

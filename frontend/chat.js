@@ -4,6 +4,8 @@ sendMessageButton.addEventListener('click', () => sendMessage(document.getElemen
 const inviteButton = document.getElementById('inviteButton')
 inviteButton.addEventListener('click', () => invite(), false);
 
+let socket = io();
+
  //= document.getElementById('sendMessageButton'); str.
 let currentLocation = window.location;
 let chatid = currentLocation.pathname.slice(6);
@@ -18,6 +20,7 @@ let lastuid = -1;
 
 let position;
 let user;
+let chatMembers = {};
 
 let messages = '';
 
@@ -62,7 +65,7 @@ async function printMessages(){
     });
 
     let chatMembersResuslt = await response.json();
-    let chatMembers = {};
+    
 
 
     for(obj of chatMembersResuslt){
@@ -116,7 +119,7 @@ async function printMessages(){
         //for(mess of messages){
             
             if(messages[i].uid != lastuid){
-                messageTemplate(chatMembers[user.uid])
+                messageTemplate(chatMembers[messages[i].uid])
             }
             addMessage(messages[i].message)
             lastuid = messages[i].uid;
@@ -124,9 +127,21 @@ async function printMessages(){
 
     }
 
+    document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight
+
+    socket.emit('join chat', {name: user.login, room: chatid})
+
 }
 
+socket.on('message', (message) => {
+    if(message.uid != lastuid){
+        messageTemplate(chatMembers[message.uid])
+    }
+    addMessage(message.message)
+    lastuid = message.uid;
 
+    document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight
+})
 
 function messageTemplate(username){
 
@@ -184,13 +199,18 @@ async function sendMessage(input){
     });
     let result = await response.json();
 
-    if(messages.length == 0){
-        messageTemplate(chatMembers[messages[i].uid])
+    /** if(user.uid != lastuid){
+        messageTemplate(chatMembers[user.uid])
     }
-    
     addMessage(input)
+    lastuid = user.uid; **/
 
     document.getElementById('messageText').value = '';
+
+    socket.emit('sendMessage', {uid: user.uid, message: input})
+    document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight
+
+
 }
 
 async function invite(){

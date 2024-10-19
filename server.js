@@ -2,9 +2,13 @@ const mysql = require("mysql2");
 const express = require('express');
 const bodyParser = require('body-parser')
 const session = require('express-session')
-
-
+const http = require('http');
 const app = express()
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
+
+
 const port = 3000
 
 app.set('view engine', 'pug')
@@ -20,7 +24,30 @@ app.use(session({
 app.use(express.static('/frontend/assets/dist/css'))
 app.use(express.static('./frontend/chat.css'))
 
-app.listen(port, () => {
+io.on('connection', (socket) => {
+    console.log(`User connected on ` + socket);
+    let room;
+
+    socket.on('join chat',  body  => {
+        room = body.room
+
+        socket.join(room)
+        //socket.in(room).emit('notification', { title: 'Someone\'s here', description: `${user.name} just entered the room` })
+        //io.in(room).emit('users', getUsers(room))
+
+    })
+    
+    socket.on('sendMessage', input => {
+
+
+        io.in(room).emit('message', input); 
+    })
+
+
+
+});
+
+server.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
 
@@ -180,6 +207,8 @@ app.put('/chat/:chatroomid', (req, res) => {
             res.send({result})
     })
 })
+
+
 
 app.get('/chat/:chatroomid', (req, res) => {
 

@@ -215,7 +215,7 @@ async function sendMessage(input){
 
 async function invite(){
 
-    let input = prompt('Введите uid');
+    let input = prompt('Введите ник');
 
     data = {user: input}
 
@@ -227,6 +227,18 @@ async function invite(){
         }
     });
     let result = await response.json();
+
+    response = await fetch(`/chat_members/${chatid}`, {
+        method: "GET",
+    });
+
+    let chatMembersResuslt = await response.json();
+    
+
+
+    for(obj of chatMembersResuslt){
+        chatMembers[obj.uid] = obj.login
+    }
 
 
 }
